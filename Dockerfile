@@ -21,15 +21,14 @@ RUN cd nginx-${NGINX_VERSION} && \
     make modules
 
 # ── Runtime stage: usa imagem oficial nginx-alpine com módulo Brotli ─
-FROM nginx:${NGINX_VERSION}-alpine
+FROM nginx:1.25.4-alpine  # <-- Evita erro definindo versão diretamente
 
 # Copia módulos Brotli compilados
-COPY --from=builder /build/nginx-${NGINX_VERSION}/objs/ngx_http_brotli_filter_module.so /etc/nginx/modules/
-COPY --from=builder /build/nginx-${NGINX_VERSION}/objs/ngx_http_brotli_static_module.so /etc/nginx/modules/
+COPY --from=builder /build/nginx-1.25.4/objs/ngx_http_brotli_filter_module.so /etc/nginx/modules/
+COPY --from=builder /build/nginx-1.25.4/objs/ngx_http_brotli_static_module.so /etc/nginx/modules/
 
 # Copia configuração personalizada e arquivos do site
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY . /usr/share/nginx/html
 
-# Expondo porta 80 (Cloudflare/HTTP handle nas bordas)
 EXPOSE 80
