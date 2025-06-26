@@ -19,7 +19,7 @@ RUN cd nginx-${NGINX_VERSION} && \
     ./configure --with-compat --add-dynamic-module=../ngx_brotli && \
     make modules
 
-FROM nginx:1.25.4-alpine  # <-- Evita erro definindo versão diretamente
+FROM nginx:1.25.4-alpine 
 
 COPY --from=builder /build/nginx-1.25.4/objs/ngx_http_brotli_filter_module.so /etc/nginx/modules/
 COPY --from=builder /build/nginx-1.25.4/objs/ngx_http_brotli_static_module.so /etc/nginx/modules/
