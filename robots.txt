@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ultrabotox.com.br/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Allow important files
+Allow: /images/
+Allow: /videos/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.webp
+Allow: /*.mp4
+
+# Disallow unnecessary files
+Disallow: /attached_assets/
+Disallow: /*.log
+Disallow: /server.js
+Disallow: /start.js
