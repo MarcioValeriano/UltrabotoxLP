@@ -1,0 +1,23 @@
+{
+  "name": "Dr. Márcio Valeriano - UltraBotox",
+  "short_name": "UltraBotox",
+  "description": "Método revolucionário de toxina botulínica com mapeamento facial personalizado",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#2d4c4c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "./images/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
