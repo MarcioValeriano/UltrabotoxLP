@@ -1,8 +1,10 @@
-# Usa imagem com Brotli e Gzip ativados
-FROM eugeneware/nginx-brotli:latest
+FROM nginx:1.25-alpine
 
-# Copia a configuração do NGINX
+# Instala Brotli e ferramentas necessárias
+RUN apk add --no-cache brotli
+
+# Copia config customizado com suporte a Brotli
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copia os arquivos estáticos
+# Copia site estático
 COPY . /usr/share/nginx/html
