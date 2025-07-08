@@ -13,8 +13,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initContactForm();
     initBackToTop();
     initPhoneFormatting();
+    initVideoTracking();
+    initLazyLoading();
+    initCustomVideoPlayer();
+    initReelsVideoPlayer();
+    initPlyrPlayer();
     
-    console.log('Dr. Márcio Valeriano - UltraBotox Landing Page Initialized');
+    console.log('Dr. Márcio Valeriano - Landing Page Initialized');
 });
 
 // Mobile Menu Toggle
@@ -47,7 +52,7 @@ function initMobileMenu() {
             mobileMenu.classList.remove('hidden');
             mobileMenuButton.innerHTML = '<i data-lucide="x" class="w-6 h-6"></i>';
             mobileMenuButton.setAttribute('aria-expanded', 'true');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden'; // Prevent body scroll
         } else {
             closeMobileMenu();
         }
@@ -63,7 +68,7 @@ function initMobileMenu() {
         mobileMenu.classList.add('hidden');
         mobileMenuButton.innerHTML = '<i data-lucide="menu" class="w-6 h-6"></i>';
         mobileMenuButton.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+        document.body.style.overflow = ''; // Restore body scroll
         
         // Re-initialize icons
         if (typeof lucide !== 'undefined') {
@@ -195,7 +200,7 @@ function handleFormSubmit(e) {
         name: formData.get('name')?.trim(),
         phone: formData.get('phone')?.trim(),
         city: formData.get('city'),
-        message: formData.get('message')?.trim() || 'Gostaria de agendar uma consulta para UltraBotox.'
+        message: formData.get('message')?.trim() || 'Gostaria de agendar uma consulta para otoplastia.'
     };
     
     // Validate required fields
@@ -221,7 +226,7 @@ function handleFormSubmit(e) {
         trackEvent('form_submitted', {
             form_type: 'contact_form',
             city: data.city,
-            has_custom_message: data.message !== 'Gostaria de agendar uma consulta para UltraBotox.'
+            has_custom_message: data.message !== 'Gostaria de agendar uma consulta para otoplastia.'
         });
         
         // Show success message
@@ -305,7 +310,7 @@ function clearFieldError(e) {
 }
 
 function showFieldError(field, message) {
-    removeFieldError(field);
+    removeFieldError(field); // Remove existing error
     
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
@@ -416,6 +421,580 @@ function initPhoneFormatting() {
         const char = String.fromCharCode(e.which);
         if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 9) {
             e.preventDefault();
+        }
+    });
+}
+
+// Custom Video Player (Instagram Reels Style)
+function initCustomVideoPlayer() {
+    const video = document.getElementById('main-video');
+    const playOverlay = document.getElementById('play-overlay');
+    const videoControls = document.getElementById('video-controls');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const muteBtn = document.getElementById('mute-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressSlider = document.getElementById('progress-slider');
+    const timeDisplay = document.getElementById('time-display');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    
+    if (!video) return;
+    
+    let isPlaying = false;
+    let isMuted = false;
+    
+    // Format time display
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Play/Pause functionality
+    function togglePlayPause() {
+        if (isPlaying) {
+            video.pause();
+        } else {
+            video.play();
+        }
+    }
+    
+    // Update play button icon
+    function updatePlayButton() {
+        const icon = playPauseBtn ? playPauseBtn.querySelector('i') : null;
+        if (icon) {
+            if (isPlaying) {
+                icon.setAttribute('data-lucide', 'pause');
+                if (playOverlay) playOverlay.style.display = 'none';
+            } else {
+                icon.setAttribute('data-lucide', 'play');
+                if (playOverlay) playOverlay.style.display = 'flex';
+            }
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
+    
+    // Update mute button icon
+    function updateMuteButton() {
+        const icon = muteBtn ? muteBtn.querySelector('i') : null;
+        if (icon) {
+            if (isMuted || video.volume === 0) {
+                icon.setAttribute('data-lucide', 'volume-x');
+            } else {
+                icon.setAttribute('data-lucide', 'volume-2');
+            }
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
+    
+    // Show/hide controls
+    let controlsTimeout;
+    function showControls() {
+        videoControls.style.opacity = '1';
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(() => {
+            if (isPlaying) {
+                videoControls.style.opacity = '0';
+            }
+        }, 3000);
+    }
+    
+    // Event listeners
+    playOverlay.addEventListener('click', togglePlayPause);
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    
+    muteBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        isMuted = video.muted;
+        updateMuteButton();
+    });
+    
+    fullscreenBtn.addEventListener('click', () => {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        }
+    });
+    
+    // Progress slider
+    progressSlider.addEventListener('input', () => {
+        const time = (progressSlider.value / 100) * video.duration;
+        video.currentTime = time;
+    });
+    
+    // Video events
+    video.addEventListener('loadstart', () => {
+        loadingSpinner.classList.remove('hidden');
+    });
+    
+    video.addEventListener('canplay', () => {
+        loadingSpinner.classList.add('hidden');
+    });
+    
+    video.addEventListener('play', () => {
+        isPlaying = true;
+        updatePlayButton();
+        showControls();
+        trackEvent('video_started', {
+            video_id: 'main-video',
+            video_title: 'Procedure Video'
+        });
+    });
+    
+    video.addEventListener('pause', () => {
+        isPlaying = false;
+        updatePlayButton();
+        videoControls.style.opacity = '1';
+    });
+    
+    video.addEventListener('timeupdate', () => {
+        if (video.duration) {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = progress + '%';
+            progressSlider.value = progress;
+            timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+        }
+    });
+    
+    video.addEventListener('ended', () => {
+        isPlaying = false;
+        updatePlayButton();
+        videoControls.style.opacity = '1';
+        trackEvent('video_completed', {
+            video_id: 'main-video',
+            video_title: 'Procedure Video'
+        });
+    });
+    
+    // Mouse movement to show controls
+    video.parentElement.addEventListener('mousemove', showControls);
+    video.parentElement.addEventListener('mouseleave', () => {
+        if (isPlaying) {
+            videoControls.style.opacity = '0';
+        }
+    });
+    
+    // Touch events for mobile
+    video.parentElement.addEventListener('touchstart', showControls);
+    
+    // Initialize
+    updatePlayButton();
+    updateMuteButton();
+}
+
+// Simple video toggle function for gallery videos
+function toggleVideo(videoId) {
+    const video = document.getElementById(videoId);
+    const overlay = document.getElementById('overlay-' + videoId.split('-')[1]);
+    
+    if (!video) return;
+    
+    if (video.paused) {
+        // Pause all other videos first
+        document.querySelectorAll('video').forEach(v => {
+            if (v.id !== videoId && !v.paused) {
+                v.pause();
+                const otherId = v.id.split('-')[1];
+                const otherOverlay = document.getElementById('overlay-' + otherId);
+                if (otherOverlay) otherOverlay.style.display = 'flex';
+            }
+        });
+        
+        video.play();
+        if (overlay) overlay.style.display = 'none';
+        
+        trackEvent('video_started', {
+            video_id: videoId,
+            video_title: 'Gallery Video'
+        });
+    } else {
+        video.pause();
+        if (overlay) overlay.style.display = 'flex';
+    }
+}
+
+// Video Tracking
+// Reels-style video player
+function initReelsVideoPlayer() {
+    const video = document.getElementById('reels-video');
+    const overlay = document.getElementById('video-overlay');
+    const playButton = document.getElementById('play-button');
+    const soundToggle = document.getElementById('sound-toggle');
+    const soundIcon = document.getElementById('sound-icon');
+    const progressBar = document.getElementById('progress-bar');
+    
+    if (!video) return;
+    
+    let isPlaying = false;
+    let isMuted = true;
+    
+    // Prevent video download and right-click
+    video.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Disable drag
+    video.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Disable text selection
+    video.style.userSelect = 'none';
+    video.style.webkitUserSelect = 'none';
+    
+    // Toggle play/pause on video click
+    video.addEventListener('click', togglePlayPause);
+    if (overlay) {
+        overlay.addEventListener('click', togglePlayPause);
+    }
+    
+    // Sound toggle
+    if (soundToggle) {
+        soundToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isMuted = !isMuted;
+            video.muted = isMuted;
+            
+            if (soundIcon) {
+                soundIcon.setAttribute('data-lucide', isMuted ? 'volume-x' : 'volume-2');
+                lucide.createIcons();
+            }
+        });
+    }
+    
+    // Progress bar update
+    video.addEventListener('timeupdate', () => {
+        if (video.duration) {
+            const progress = (video.currentTime / video.duration) * 100;
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+        }
+    });
+    
+    // Show/hide overlay on hover
+    video.addEventListener('mouseenter', () => {
+        if (!isPlaying && overlay) {
+            overlay.style.opacity = '1';
+        }
+    });
+    
+    video.addEventListener('mouseleave', () => {
+        if (overlay) {
+            overlay.style.opacity = '0';
+        }
+    });
+    
+    function togglePlayPause() {
+        if (isPlaying) {
+            video.pause();
+            isPlaying = false;
+            if (overlay) overlay.style.opacity = '1';
+            if (playButton) playButton.innerHTML = '<i data-lucide="play" class="text-black w-6 h-6 ml-1"></i>';
+        } else {
+            video.play();
+            isPlaying = true;
+            if (overlay) overlay.style.opacity = '0';
+            if (playButton) playButton.innerHTML = '<i data-lucide="pause" class="text-black w-6 h-6"></i>';
+        }
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+    
+    // Mobile-optimized auto-play when in viewport
+    const isMobile = window.innerWidth <= 768;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio > (isMobile ? 0.3 : 0.5)) {
+                // Auto play when visible (lower threshold for mobile)
+                setTimeout(() => {
+                    if (!isPlaying) {
+                        togglePlayPause();
+                    }
+                }, isMobile ? 200 : 500);
+            } else {
+                // Pause when not visible
+                if (isPlaying) {
+                    togglePlayPause();
+                }
+            }
+        });
+    }, { threshold: isMobile ? 0.3 : 0.5 });
+    
+    // Touch event handling for mobile
+    if (isMobile) {
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        video.addEventListener('touchstart', (e) => {
+            touchStartY = e.changedTouches[0].screenY;
+        });
+        
+        video.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].screenY;
+            const touchDiff = touchStartY - touchEndY;
+            
+            // Only toggle if it's a tap, not a scroll
+            if (Math.abs(touchDiff) < 10) {
+                togglePlayPause();
+            }
+        });
+    }
+    
+    observer.observe(video);
+}
+
+function initVideoTracking() {
+    const videos = document.querySelectorAll('video');
+    
+    videos.forEach(video => {
+        let hasStarted = false;
+        let hasReached25 = false;
+        let hasReached50 = false;
+        let hasReached75 = false;
+        
+        video.addEventListener('play', function() {
+            if (!hasStarted) {
+                hasStarted = true;
+                trackEvent('video_started', {
+                    video_id: this.id || 'main-video',
+                    video_title: this.getAttribute('data-title') || 'Procedure Video'
+                });
+            }
+        });
+        
+        video.addEventListener('timeupdate', function() {
+            const progress = (this.currentTime / this.duration) * 100;
+            
+            if (progress >= 25 && !hasReached25) {
+                hasReached25 = true;
+                trackEvent('video_progress', { progress: 25 });
+            } else if (progress >= 50 && !hasReached50) {
+                hasReached50 = true;
+                trackEvent('video_progress', { progress: 50 });
+            } else if (progress >= 75 && !hasReached75) {
+                hasReached75 = true;
+                trackEvent('video_progress', { progress: 75 });
+            }
+        });
+        
+        video.addEventListener('ended', function() {
+            trackEvent('video_completed', {
+                video_id: this.id || 'main-video',
+                video_title: this.getAttribute('data-title') || 'Procedure Video'
+            });
+        });
+    });
+}
+
+// Lazy Loading for Images
+function initLazyLoading() {
+    const images = document.querySelectorAll('img[loading="lazy"]');
+    
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.addEventListener('load', () => {
+                        img.classList.add('loaded');
+                    });
+                    observer.unobserve(img);
+                }
+            });
+        });
+        
+        images.forEach(img => imageObserver.observe(img));
+    } else {
+        // Fallback for older browsers
+        images.forEach(img => img.classList.add('loaded'));
+    }
+    
+    // Aggressive video optimization and immediate preloading
+    const criticalVideo = document.getElementById('quality-life-player');
+    if (criticalVideo) {
+        // Force immediate video loading
+        criticalVideo.load();
+        
+        // Optimize video attributes for fastest loading
+        criticalVideo.setAttribute('playsinline', '');
+        criticalVideo.setAttribute('webkit-playsinline', '');
+        criticalVideo.muted = true;
+        criticalVideo.autoplay = true;
+        criticalVideo.preload = 'auto';
+        
+        // Set buffer optimization
+        criticalVideo.setAttribute('x-webkit-airplay', 'allow');
+        criticalVideo.setAttribute('webkit-playsinline', 'true');
+        
+        // Force loading events
+        criticalVideo.addEventListener('loadstart', () => {
+            console.log('Video loading optimized - immediate start');
+        });
+        
+        criticalVideo.addEventListener('loadeddata', () => {
+            console.log('Video data loaded - ready to play');
+        });
+        
+        // Start loading immediately on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                criticalVideo.load();
+            });
+        } else {
+            criticalVideo.load();
+        }
+    }
+    
+    // Register Service Worker for video caching
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+                console.log('Service Worker registered for video caching');
+            })
+            .catch((error) => {
+                console.log('SW registration failed: ', error);
+            });
+    }
+}
+
+// Plyr Video Player with Autoplay on Scroll
+function initPlyrPlayer() {
+    const videoElement = document.getElementById('quality-life-player');
+    if (!videoElement || typeof Plyr === 'undefined') return;
+    
+    // Initialize Plyr with performance optimizations
+    const player = new Plyr(videoElement, {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+        settings: [],
+        youtube: { noCookie: false, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 },
+        displayDuration: true,
+        invertTime: false,
+        toggleInvert: false,
+        ratio: '9:16', // Instagram Reels format
+        clickToPlay: true,
+        hideControls: true,
+        resetOnEnd: false,
+        disableContextMenu: true,
+        loadSprite: false, // Disable sprite loading for faster initialization
+        iconPrefix: 'plyr',
+        iconUrl: '', // Remove icon URL to reduce network requests
+        blankVideo: '',
+        quality: { default: 480, options: [480, 720] }, // Start with lower quality
+        loop: { active: false },
+        speed: { selected: 1, options: [1] },
+        keyboard: { focused: true, global: false },
+        tooltips: { controls: false, seek: false }, // Disable tooltips for better performance
+        captions: { active: false, language: 'auto', update: false },
+        fullscreen: { enabled: true, fallback: true, iosNative: false, container: null },
+        storage: { enabled: false, key: 'plyr' },
+        ads: { enabled: false },
+        previewThumbnails: { enabled: false },
+        vimeo: { byline: false, portrait: false, title: false, speed: true, transparent: false },
+        mediaMetadata: { title: 'Blefaroplastia - Qualidade de Vida', artist: 'Dr. Márcio Valeriano', album: '', artwork: [] },
+        markers: { enabled: false },
+        // Ultra-fast loading optimizations
+        muted: true, // Allows autoplay
+        autoplay: true, // Immediate autoplay
+        preload: 'auto', // Load entire video immediately
+        // Advanced streaming settings
+        buffered: true,
+        seekRewind: false,
+        fastForward: false,
+        // Network optimization
+        resetOnEnd: false,
+        // Reduce control overhead
+        clickToPlay: false
+    });
+
+    let hasStartedPlaying = false;
+    
+    // Create optimized intersection observer with preloading
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Preload video when entering viewport
+                if (videoElement.readyState === 0) {
+                    videoElement.load();
+                }
+                
+                // Video is in view - play it immediately
+                if (!hasStartedPlaying) {
+                    player.play().then(() => {
+                        hasStartedPlaying = true;
+                        trackEvent('plyr_autoplay_started', {
+                            video_id: 'quality-life-player',
+                            video_title: 'Blefaroplastia - Qualidade de Vida'
+                        });
+                    }).catch((error) => {
+                        console.log('Autoplay failed:', error);
+                    });
+                } else {
+                    player.play().catch((error) => {
+                        console.log('Resume play failed:', error);
+                    });
+                }
+            } else {
+                // Video is out of view - pause it
+                if (!player.paused) {
+                    player.pause();
+                }
+            }
+        });
+    }, {
+        threshold: 0.1, // Load as soon as 10% visible
+        rootMargin: '200px 0px' // Start loading 200px before entering viewport
+    });
+    
+    // Observe the video container
+    const videoContainer = videoElement.closest('.video-container');
+    if (videoContainer) {
+        videoObserver.observe(videoContainer);
+    }
+    
+    // Track video events
+    player.on('play', () => {
+        trackEvent('plyr_play', {
+            video_id: 'quality-life-player',
+            timestamp: Date.now()
+        });
+    });
+    
+    player.on('pause', () => {
+        trackEvent('plyr_pause', {
+            video_id: 'quality-life-player',
+            timestamp: Date.now()
+        });
+    });
+    
+    player.on('ended', () => {
+        trackEvent('plyr_ended', {
+            video_id: 'quality-life-player',
+            timestamp: Date.now()
+        });
+    });
+    
+    player.on('progress', () => {
+        const progress = (player.currentTime / player.duration) * 100;
+        if (progress >= 25 && progress < 50 && !player.progressTracked25) {
+            player.progressTracked25 = true;
+            trackEvent('plyr_progress', { progress: 25 });
+        } else if (progress >= 50 && progress < 75 && !player.progressTracked50) {
+            player.progressTracked50 = true;
+            trackEvent('plyr_progress', { progress: 50 });
+        } else if (progress >= 75 && !player.progressTracked75) {
+            player.progressTracked75 = true;
+            trackEvent('plyr_progress', { progress: 75 });
         }
     });
 }
@@ -573,7 +1152,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Focus management for mobile menu
+// Improved focus management
 function trapFocus(element) {
     const focusableElements = element.querySelectorAll(
         'a[href], button:not([disabled]), textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), input[type="checkbox"]:not([disabled]), select:not([disabled])'
@@ -607,6 +1186,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Preload critical resources
+function preloadCriticalResources() {
+    const criticalImages = [
+        './images/doctor-hero.jpg',
+        './images/doctor-about.jpg',
+        './images/logo.webp'
+    ];
+    
+    criticalImages.forEach(src => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = src;
+        document.head.appendChild(link);
+    });
+}
+
+// Initialize preloading
+preloadCriticalResources();
+
 // Handle reduced motion preferences
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     // Disable animations for users who prefer reduced motion
@@ -621,3 +1220,31 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     `;
     document.head.appendChild(style);
 }
+
+// Theme detection and system preference handling
+function handleThemePreference() {
+    // This site uses a dark theme by default
+    // Could be extended to support light/dark mode toggle
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (prefersDark) {
+        document.documentElement.classList.add('dark-theme');
+    }
+}
+
+handleThemePreference();
+
+// Print optimization
+window.addEventListener('beforeprint', function() {
+    // Hide non-essential elements before printing
+    document.querySelectorAll('.no-print, .fixed, button').forEach(el => {
+        el.style.display = 'none';
+    });
+});
+
+window.addEventListener('afterprint', function() {
+    // Restore elements after printing
+    document.querySelectorAll('.no-print, .fixed, button').forEach(el => {
+        el.style.display = '';
+    });
+});
