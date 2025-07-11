@@ -59,13 +59,16 @@ const server = http.createServer((req, res) => {
 
     if (acceptEncoding.includes('br')) {
       res.setHeader('Content-Encoding', 'br');
+      res.writeHead(200);
       const brotli = zlib.createBrotliCompress();
       stream.pipe(brotli).pipe(res);
     } else if (acceptEncoding.includes('gzip')) {
       res.setHeader('Content-Encoding', 'gzip');
+      res.writeHead(200);
       const gzip = zlib.createGzip();
       stream.pipe(gzip).pipe(res);
     } else {
+      res.writeHead(200);
       stream.pipe(res);
     }
   };
@@ -105,7 +108,6 @@ const server = http.createServer((req, res) => {
     }
 
     if (useStream) {
-      res.writeHead(200);
       const fileStream = fs.createReadStream(filePath);
       streamWithCompression(fileStream);
     } else {
