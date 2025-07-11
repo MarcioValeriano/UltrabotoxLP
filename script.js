@@ -9,12 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initMobileMenu();
     initSmoothScrolling();
     initScrollAnimations();
-    initFAQ();
+
     initContactForm();
     initBackToTop();
     initPhoneFormatting();
     
-    console.log('Dr. Márcio Valeriano - UltraBotox Landing Page Initialized');
+    console.log('Dr. Márcio Valeriano - Técnica Exclusiva Landing Page Initialized');
 });
 
 // Mobile Menu Toggle
@@ -133,44 +133,7 @@ function initScrollAnimations() {
     }, 100);
 }
 
-// FAQ Accordion
-function initFAQ() {
-    const faqButtons = document.querySelectorAll('.faq-button');
-    
-    faqButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const faqNumber = this.getAttribute('data-faq');
-            const content = this.nextElementSibling;
-            const icon = this.querySelector('.faq-icon');
-            const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
-            
-            // Close all other FAQs
-            faqButtons.forEach(otherButton => {
-                if (otherButton !== button) {
-                    const otherContent = otherButton.nextElementSibling;
-                    const otherIcon = otherButton.querySelector('.faq-icon');
-                    otherContent.style.maxHeight = '0px';
-                    otherIcon.style.transform = 'rotate(0deg)';
-                }
-            });
-            
-            // Toggle current FAQ
-            if (isOpen) {
-                content.style.maxHeight = '0px';
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.style.transform = 'rotate(180deg)';
-                
-                // Track FAQ interaction
-                trackEvent('faq_opened', {
-                    question_number: faqNumber,
-                    question_text: this.querySelector('h3').textContent
-                });
-            }
-        });
-    });
-}
+
 
 // Contact Form Handling
 function initContactForm() {
@@ -195,7 +158,7 @@ function handleFormSubmit(e) {
         name: formData.get('name')?.trim(),
         phone: formData.get('phone')?.trim(),
         city: formData.get('city'),
-        message: formData.get('message')?.trim() || 'Gostaria de agendar uma consulta para UltraBotox.'
+        message: formData.get('message')?.trim() || 'Gostaria de agendar uma consulta para técnica exclusiva.'
     };
     
     // Validate required fields
@@ -221,7 +184,7 @@ function handleFormSubmit(e) {
         trackEvent('form_submitted', {
             form_type: 'contact_form',
             city: data.city,
-            has_custom_message: data.message !== 'Gostaria de agendar uma consulta para UltraBotox.'
+            has_custom_message: data.message !== 'Gostaria de agendar uma consulta para técnica exclusiva.'
         });
         
         // Show success message
@@ -566,11 +529,7 @@ document.addEventListener('keydown', function(e) {
         }
     }
     
-    // Enter and Space for custom buttons
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('faq-button')) {
-        e.preventDefault();
-        e.target.click();
-    }
+
 });
 
 // Focus management for mobile menu
